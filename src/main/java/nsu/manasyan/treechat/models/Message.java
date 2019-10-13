@@ -10,12 +10,12 @@ public class Message {
 
     private String content;
 
-    private int type;
+    private MessageType type;
 
     // for json
     public Message(){}
 
-    public Message(String name, String content, int type) {
+    public Message(String name, String content, MessageType type) {
         this.name = name;
         this.content = content;
         this.type = type;
@@ -37,7 +37,7 @@ public class Message {
         this.content = content;
     }
 
-    public int getType() {
+    public MessageType getType() {
         return type;
     }
 
@@ -49,7 +49,7 @@ public class Message {
         this.name = name;
     }
 
-    public void setType(int type) {
+    public void setType(MessageType type) {
         this.type = type;
     }
 }
