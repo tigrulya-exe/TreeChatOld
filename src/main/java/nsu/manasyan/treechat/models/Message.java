@@ -3,7 +3,7 @@ package nsu.manasyan.treechat.models;
 import java.util.UUID;
 
 public class Message {
-    private String GUID = UUID.randomUUID().toString();
+    private String GUID;
 //    private String GUID;
 
     private String name;
@@ -15,7 +15,12 @@ public class Message {
     // for json
     public Message(){}
 
+    public Message(MessageType type){
+        this.type = type;
+    }
+
     public Message(String name, String content, MessageType type) {
+        this.GUID = UUID.randomUUID().toString();
         this.name = name;
         this.content = content;
         this.type = type;

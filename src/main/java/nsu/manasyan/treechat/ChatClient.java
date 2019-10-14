@@ -1,7 +1,6 @@
 package nsu.manasyan.treechat;
 
 import nsu.manasyan.treechat.models.MessageContext;
-import nsu.manasyan.treechat.models.MessageType;
 import nsu.manasyan.treechat.models.NeighbourContext;
 
 import java.io.IOException;
@@ -52,21 +51,7 @@ public class ChatClient {
     }
 
     private void initTimer(){
-        timer.schedule(new Resender(sentMessages,sender), 0, CONFIRM_TIMEOUT_MS);
-
-        TimerTask keepAliveSender = new TimerTask() {
-            @Override
-            public void run() {
-                sender.broadcastMessage("", MessageType.KEEP_ALIVE, false);
-                neighbours.forEach((k,v) -> {
-                    if (!v.isAlive()) {
-                        // перестроить дерево
-                    }
-                });
-                neighbours.forEach((k,v) -> v.setAlive(false));
-            }
-        };
-
-        timer.schedule(keepAliveSender, 0, CONFIRM_TIMEOUT_MS);
+        timer.schedule(new Resender(sentMessages, sender), 0, CONFIRM_TIMEOUT_MS);
+        timer.schedule(new KeepAliveSender(neighbours, sender), 0, CONFIRM_TIMEOUT_MS);
     }
 }
