@@ -3,6 +3,7 @@ package nsu.manasyan.treechat;
 import nsu.manasyan.treechat.models.Message;
 import nsu.manasyan.treechat.models.MessageContext;
 import nsu.manasyan.treechat.models.MessageType;
+import nsu.manasyan.treechat.models.NeighbourContext;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -20,7 +21,7 @@ interface Handler{
 public class Listener {
     private int port;
 
-    private Map<InetSocketAddress,InetSocketAddress> neighbours;
+    private Map<InetSocketAddress, NeighbourContext> neighbours;
 
     private Map<String, MessageContext> sentMessages;
 
@@ -36,7 +37,7 @@ public class Listener {
 
 //    private ExecutorService executorService = Executors.newCachedThreadPool();
 
-    public Listener(Map<InetSocketAddress, InetSocketAddress> neighbours, int port,
+    public Listener(Map<InetSocketAddress, NeighbourContext> neighbours, int port,
                     Sender sender, Map<String, MessageContext> sentMessages, DatagramSocket socket) {
         this.neighbours = neighbours;
         this.port = port;
@@ -74,28 +75,32 @@ public class Listener {
         sentMessages.remove(message.getGUID().substring(1));
     }
 
+    private void handleKeepAliveMessage(Message message, InetSocketAddress address){
+        neighbours.get(address).setAlive(true);
+    }
+
     private void handleHelloMessage(Message message, InetSocketAddress senderAddress) throws IOException {
         sender.sendConfirmation(message.getGUID(), senderAddress);
         // если это новый сосед, а не ответ на наш хелло пакет, то отправляем ему своего заместителя
-//        InetSocketAddress senderAlternate = fromJson(message.getContent(), InetSocketAddress.class);
         InetSocketAddress senderAlternate = getSocketAddress(message.getContent());
 
         if(!neighbours.containsKey(senderAddress)){
             sender.sendHelloMessage(senderAddress);
         }
-        neighbours.put(senderAddress, senderAlternate);
+        neighbours.put(senderAddress, new NeighbourContext(senderAlternate));
     }
 
     private void handleMessage(Message message, InetSocketAddress senderAddress) throws IOException{
         sender.sendConfirmation(message.getGUID(), senderAddress);
         System.out.println("[" + message.getName() + "] : " + message.getContent());
-        sender.broadcastMessage(message, senderAddress);
+        sender.broadcastMessage(message, senderAddress, true);
     }
 
     private void initHandlers(){
         handlers.put(MessageType.ACK, this::handleConfirmation);
         handlers.put(MessageType.HELLO, this::handleHelloMessage);
         handlers.put(MessageType.MESSAGE, this::handleMessage);
+        handlers.put(MessageType.KEEP_ALIVE, this::handleKeepAliveMessage);
     }
 
     private InetSocketAddress getSocketAddress(String addressAndPort){

@@ -3,6 +3,7 @@ package nsu.manasyan.treechat;
 import nsu.manasyan.treechat.models.Message;
 import nsu.manasyan.treechat.models.MessageContext;
 import nsu.manasyan.treechat.models.MessageType;
+import nsu.manasyan.treechat.models.NeighbourContext;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -14,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import static nsu.manasyan.treechat.util.JsonService.toJson;
 
 public class Sender {
-    private Map<InetSocketAddress,InetSocketAddress> neighbours;
+    private Map<InetSocketAddress, NeighbourContext> neighbours;
 
     private Map<String, MessageContext> sentMessages;
 
@@ -26,17 +27,16 @@ public class Sender {
 
     private InetSocketAddress alternate;
 
-    public Sender(Map<InetSocketAddress, InetSocketAddress> neighbours, DatagramSocket socket,
+    public Sender(Map<InetSocketAddress, NeighbourContext> neighbours, DatagramSocket socket,
                   String name, Map<String, MessageContext> sentMessages, ExecutorService executor) {
         this.neighbours = neighbours;
         this.socket = socket;
         this.name = name;
         this.sentMessages = sentMessages;
         this.executorService = executor;
-
     }
 
-    public void broadcastMessage(Message message, InetSocketAddress sender) {
+    public void broadcastMessage(Message message, InetSocketAddress sender, boolean isConfirmNeed) {
         executorService.submit(() ->
                 neighbours.keySet().forEach(ia -> {
                     try {
@@ -44,15 +44,16 @@ public class Sender {
                             return;
                         byte[] buf = toJson(message).getBytes();
                         socket.send(new DatagramPacket(buf, buf.length, ia));
-                        sentMessages.put(message.getGUID(), new MessageContext(System.currentTimeMillis(), ia));
+                        if(isConfirmNeed)
+                            sentMessages.put(message.getGUID(), new MessageContext(message, ia));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }));
     }
 
-    public void broadcastMessage(String content, MessageType messageType) {
-        broadcastMessage(new Message(name, content, messageType), null);
+    public void broadcastMessage(String content, MessageType messageType, boolean isConfirmNeed) {
+        broadcastMessage(new Message(name, content, messageType), null, isConfirmNeed);
     }
 
     public void sendMessage(InetSocketAddress receiverAddress, Message message) throws IOException {

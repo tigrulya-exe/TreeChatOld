@@ -17,7 +17,7 @@ public class CommandlineHandler implements Runnable{
             String messageStr;
             while (true) {
                 messageStr = reader.readLine();
-                sender.broadcastMessage(messageStr, MessageType.MESSAGE);
+                sender.broadcastMessage(messageStr, MessageType.MESSAGE,true);
             }
         }catch (IOException e) {
             e.printStackTrace();
