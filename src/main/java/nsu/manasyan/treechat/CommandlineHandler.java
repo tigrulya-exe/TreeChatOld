@@ -17,6 +17,7 @@ public class CommandlineHandler implements Runnable{
             String messageStr;
             while (true) {
                 messageStr = reader.readLine();
+                System.out.println("You: " + messageStr);
                 sender.broadcastMessage(messageStr, MessageType.MESSAGE,true);
             }
         }catch (IOException e) {

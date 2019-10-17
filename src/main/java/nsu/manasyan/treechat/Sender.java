@@ -59,7 +59,11 @@ public class Sender {
     public void sendMessage(InetSocketAddress receiverAddress, Message message) throws IOException {
         byte[] buf = toJson(message).getBytes();
         //TODO тут надо учитывать, чтобы размер json не был больше буф сайза
+        try{
         socket.send(new DatagramPacket(buf, buf.length, receiverAddress));
+        }catch (IllegalArgumentException ex){
+            System.out.println(ex.getLocalizedMessage() + " : " + receiverAddress);
+        }
     }
 
     public void sendConfirmation(String GUID, InetSocketAddress receiverAddress) throws IOException {
@@ -70,13 +74,20 @@ public class Sender {
 
     public void sendHelloMessage(InetSocketAddress receiverAddress) throws IOException {
 //        String alternateJson = toJson(alternate);
-        String alternateJson = (alternate == null) ? null : alternate.toString();
-        Message message = new Message(name, alternateJson, MessageType.HELLO);
+        String alternateStr = (alternate.equals(receiverAddress)) ? null : alternate.toString().substring(1);
+        Message message = new Message(name, alternateStr, MessageType.HELLO);
         sendMessage(receiverAddress,message);
     }
 
-    public void setAlternate(InetSocketAddress alternate) throws IOException {
-        this.alternate = alternate;
+    public void notifyAlternate() throws IOException {
         sendHelloMessage(alternate);
+    }
+
+    public void setAlternate(InetSocketAddress alternate) {
+        this.alternate = alternate;
+    }
+
+    public InetSocketAddress getAlternate() {
+        return alternate;
     }
 }

@@ -19,7 +19,7 @@ interface Handler{
 }
 
 public class Listener {
-    private int port;
+    private InetSocketAddress alternate;
 
     private Map<InetSocketAddress, NeighbourContext> neighbours;
 
@@ -37,14 +37,17 @@ public class Listener {
 
 //    private ExecutorService executorService = Executors.newCachedThreadPool();
 
-    public Listener(Map<InetSocketAddress, NeighbourContext> neighbours, int port,
+    public Listener(Map<InetSocketAddress, NeighbourContext> neighbours,
                     Sender sender, Map<String, MessageContext> sentMessages, DatagramSocket socket) {
         this.neighbours = neighbours;
-        this.port = port;
         this.sender = sender;
         this.sentMessages = sentMessages;
         this.socket = socket;
         initHandlers();
+    }
+
+    public void setAlternate(InetSocketAddress alternate) {
+        this.alternate = alternate;
     }
 
     public void listen(){
@@ -56,9 +59,12 @@ public class Listener {
                 socket.receive(packetToReceive);
                 // TODO надо учитывать что данные в пакете могут быть больше размера json
                 String jsonMsg = new String(packetToReceive.getData(), 0, packetToReceive.getLength());
-                System.out.println(jsonMsg);
                 message = fromJson(jsonMsg, Message.class);
                 type = message.getType();
+
+                if(type == MessageType.HELLO)
+                    System.out.println(jsonMsg);
+
                 handlers.get(type).handle(message, (InetSocketAddress) packetToReceive.getSocketAddress());
                 // если это не делать то length будет равен размеру наименьшего из пришедших пакетов
                 packetToReceive.setLength(BUF_LENGTH);
@@ -83,6 +89,11 @@ public class Listener {
         sender.sendConfirmation(message.getGUID(), senderAddress);
         // если это новый сосед, а не ответ на наш хелло пакет, то отправляем ему своего заместителя
         InetSocketAddress senderAlternate = getSocketAddress(message.getContent());
+
+        if (alternate == null){
+            alternate = senderAddress;
+            sender.setAlternate(senderAddress);
+        }
 
         if(!neighbours.containsKey(senderAddress)){
             sender.sendHelloMessage(senderAddress);

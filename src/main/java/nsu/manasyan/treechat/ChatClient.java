@@ -34,7 +34,7 @@ public class ChatClient {
     public ChatClient(String name, int port) throws SocketException {
         this.socket = new DatagramSocket(port);
         this.sender = new Sender(neighbours,socket, name, sentMessages, executorService);
-        this.listener = new Listener(neighbours,port,sender,sentMessages,socket);
+        this.listener = new Listener(neighbours,sender,sentMessages,socket);
         this.commandlineHandler =  new CommandlineHandler(sender);
     }
 
@@ -42,6 +42,8 @@ public class ChatClient {
         this(name,port);
         neighbours.put(alternate,new NeighbourContext(null));
         sender.setAlternate(alternate);
+        sender.notifyAlternate();
+        listener.setAlternate(alternate);
     }
 
     public void start()  {
