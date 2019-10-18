@@ -23,7 +23,6 @@ public class KeepAliveSender extends TimerTask {
     public void run() {
         try {
             sender.broadcastMessage(new Message(MessageType.KEEP_ALIVE), null, false);
-//            sender.broadcastMessage("", MessageType.KEEP_ALIVE, false);
             var iter = neighbours.entrySet().iterator();
             while (iter.hasNext()) {
                 var entry = iter.next();
@@ -31,6 +30,7 @@ public class KeepAliveSender extends TimerTask {
                 if (!entry.getValue().isAlive()) {
                     iter.remove();
                     if(alternate != null) {
+                        checkDeadNeighbour(entry.getKey());
                         neighbours.put(alternate, new NeighbourContext(null));
                         sender.sendHelloMessage(alternate);
                     }
@@ -42,5 +42,11 @@ public class KeepAliveSender extends TimerTask {
         }
     }
 
+    private  void checkDeadNeighbour(InetSocketAddress address){
+        if (address.equals(sender.getAlternate())){
+            var newAlternate = (neighbours.isEmpty()) ? null : neighbours.keySet().iterator().next();
+            sender.setAlternate(newAlternate);
+        }
+    }
 
 }

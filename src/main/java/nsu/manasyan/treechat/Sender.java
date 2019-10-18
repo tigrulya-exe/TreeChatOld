@@ -4,6 +4,7 @@ import nsu.manasyan.treechat.models.Message;
 import nsu.manasyan.treechat.models.MessageContext;
 import nsu.manasyan.treechat.models.MessageType;
 import nsu.manasyan.treechat.models.NeighbourContext;
+import nsu.manasyan.treechat.util.AlternateListener;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -26,6 +27,8 @@ public class Sender {
     private String name;
 
     private InetSocketAddress alternate;
+
+    private AlternateListener alternateListener;
 
     public Sender(Map<InetSocketAddress, NeighbourContext> neighbours, DatagramSocket socket,
                   String name, Map<String, MessageContext> sentMessages, ExecutorService executor) {
@@ -74,7 +77,8 @@ public class Sender {
 
     public void sendHelloMessage(InetSocketAddress receiverAddress) throws IOException {
 //        String alternateJson = toJson(alternate);
-        String alternateStr = (alternate.equals(receiverAddress)) ? null : alternate.toString().substring(1);
+        System.out.println(receiverAddress + "- alt" + alternate);
+        String alternateStr = (receiverAddress.equals(alternate)) ? null : alternateToString();
         Message message = new Message(name, alternateStr, MessageType.HELLO);
         sendMessage(receiverAddress,message);
     }
@@ -85,9 +89,18 @@ public class Sender {
 
     public void setAlternate(InetSocketAddress alternate) {
         this.alternate = alternate;
+        alternateListener.onUpdate(alternate);
     }
 
     public InetSocketAddress getAlternate() {
         return alternate;
+    }
+
+    public void registerAlternateListener(AlternateListener listener){
+        this.alternateListener = listener;
+    }
+
+    private String alternateToString(){
+        return (alternate == null) ? null : alternate.toString().substring(1);
     }
 }

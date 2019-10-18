@@ -8,11 +8,12 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ChatClient {
-    private static final int CONFIRM_TIMEOUT_MS = 2000;
+    private static final int CONFIRM_TIMEOUT_MS = 3000;
 
     private Map<InetSocketAddress, NeighbourContext> neighbours = new HashMap<>();
 
@@ -24,7 +25,7 @@ public class ChatClient {
 
     private CommandlineHandler commandlineHandler;
 
-    private Map<String, MessageContext> sentMessages = new HashMap<>();
+    private Map<String, MessageContext> sentMessages = new ConcurrentHashMap<>();
 
     private DatagramSocket socket;
 

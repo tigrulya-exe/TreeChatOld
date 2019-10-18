@@ -41,6 +41,7 @@ public class Listener {
                     Sender sender, Map<String, MessageContext> sentMessages, DatagramSocket socket) {
         this.neighbours = neighbours;
         this.sender = sender;
+        sender.registerAlternateListener((a) -> alternate = a);
         this.sentMessages = sentMessages;
         this.socket = socket;
         initHandlers();
@@ -82,7 +83,9 @@ public class Listener {
     }
 
     private void handleKeepAliveMessage(Message message, InetSocketAddress address){
-        neighbours.get(address).setAlive(true);
+        NeighbourContext addressContext = neighbours.get(address);
+        if(addressContext != null)
+            addressContext.setAlive(true);
     }
 
     private void handleHelloMessage(Message message, InetSocketAddress senderAddress) throws IOException {
@@ -91,7 +94,7 @@ public class Listener {
         InetSocketAddress senderAlternate = getSocketAddress(message.getContent());
 
         if (alternate == null){
-            alternate = senderAddress;
+//            alternate = senderAddress;
             sender.setAlternate(senderAddress);
         }
 
