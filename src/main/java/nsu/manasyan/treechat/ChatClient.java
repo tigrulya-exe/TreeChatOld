@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ChatClient {
-    private static final int CONFIRM_TIMEOUT_MS = 3000;
+    private static final int CONFIRM_TIMEOUT_MS = 2000;
 
     private Map<InetSocketAddress, NeighbourContext> neighbours = new HashMap<>();
 

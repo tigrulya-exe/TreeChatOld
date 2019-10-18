@@ -29,6 +29,7 @@ public class KeepAliveSender extends TimerTask {
                 InetSocketAddress alternate = entry.getValue().getAlternate();
                 if (!entry.getValue().isAlive()) {
                     iter.remove();
+                    System.out.println(entry.getKey() + " is dead");
                     if(alternate != null) {
                         checkDeadNeighbour(entry.getKey());
                         neighbours.put(alternate, new NeighbourContext(null));
@@ -45,6 +46,7 @@ public class KeepAliveSender extends TimerTask {
     private  void checkDeadNeighbour(InetSocketAddress address){
         if (address.equals(sender.getAlternate())){
             var newAlternate = (neighbours.isEmpty()) ? null : neighbours.keySet().iterator().next();
+            System.out.println("New alternate: " + newAlternate);
             sender.setAlternate(newAlternate);
         }
     }

@@ -11,6 +11,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 
 import static nsu.manasyan.treechat.util.JsonService.toJson;
@@ -30,6 +31,9 @@ public class Sender {
 
     private AlternateListener alternateListener;
 
+    private Random random = new Random();
+
+
     public Sender(Map<InetSocketAddress, NeighbourContext> neighbours, DatagramSocket socket,
                   String name, Map<String, MessageContext> sentMessages, ExecutorService executor) {
         this.neighbours = neighbours;
@@ -42,13 +46,15 @@ public class Sender {
     public void broadcastMessage(Message message, InetSocketAddress sender, boolean isConfirmNeed) {
         executorService.submit(() ->
                 neighbours.keySet().forEach(ia -> {
+                    if(ia.equals(sender)) {
+                        return;
+                    }
+                    if(isConfirmNeed) {
+                        sentMessages.put(message.getGUID(), new MessageContext(message, ia));
+                    }
                     try {
-                        if(ia.equals(sender))
-                            return;
                         byte[] buf = toJson(message).getBytes();
                         socket.send(new DatagramPacket(buf, buf.length, ia));
-                        if(isConfirmNeed)
-                            sentMessages.put(message.getGUID(), new MessageContext(message, ia));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -70,6 +76,11 @@ public class Sender {
     }
 
     public void sendConfirmation(String GUID, InetSocketAddress receiverAddress) throws IOException {
+        if(random.nextInt(100) < 40) {
+            System.out.println("Oopsy " + GUID);
+            return;
+        }
+
         Message message = new Message(name, "", MessageType.ACK);
         message.setGUID("A" + GUID);
         sendMessage(receiverAddress, message);
@@ -90,6 +101,7 @@ public class Sender {
     public void setAlternate(InetSocketAddress alternate) {
         this.alternate = alternate;
         alternateListener.onUpdate(alternate);
+        System.out.println("New alternate: " + alternate);
     }
 
     public InetSocketAddress getAlternate() {
