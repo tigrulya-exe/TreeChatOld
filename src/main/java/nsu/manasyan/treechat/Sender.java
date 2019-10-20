@@ -12,7 +12,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 
 import static nsu.manasyan.treechat.util.JsonService.toJson;

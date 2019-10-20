@@ -4,6 +4,7 @@ import nsu.manasyan.treechat.models.Message;
 import nsu.manasyan.treechat.models.MessageContext;
 import nsu.manasyan.treechat.models.MessageType;
 import nsu.manasyan.treechat.models.NeighbourContext;
+import nsu.manasyan.treechat.util.FiniteQueue;
 import nsu.manasyan.treechat.util.LoggingService;
 
 import java.io.IOException;
@@ -21,6 +22,10 @@ interface Handler{
 }
 
 public class Listener {
+    private static final  int BUF_LENGTH = 524288;
+
+    private static final int RECEIVED_MESSAGES_BUF_LENGTH = 15;
+
     private InetSocketAddress alternate;
 
     private Map<InetSocketAddress, NeighbourContext> neighbours;
@@ -28,8 +33,6 @@ public class Listener {
     private Map<String, MessageContext> sentMessages;
 
     private Map<MessageType, Handler> handlers = new HashMap<>();
-
-    private int BUF_LENGTH = 524288;
 
     private byte[] receiveBuf = new byte[BUF_LENGTH];
 
@@ -39,8 +42,7 @@ public class Listener {
 
     private Random random = new Random();
 
-
-//    private ExecutorService executorService = Executors.newCachedThreadPool();
+    private FiniteQueue<String> receivedMessageGuids = new FiniteQueue<>(RECEIVED_MESSAGES_BUF_LENGTH);
 
     public Listener(Map<InetSocketAddress, NeighbourContext> neighbours,
                     Sender sender, Map<String, MessageContext> sentMessages, DatagramSocket socket) {
@@ -73,11 +75,14 @@ public class Listener {
                     continue;
                 }
 
+                if(checkIsDuplicate(type, message.getGUID())){
+                    continue;
+                }
+
                 if(type == MessageType.HELLO)
                     System.out.println(jsonMsg);
 
                 handlers.get(type).handle(message, (InetSocketAddress) packetToReceive.getSocketAddress());
-                // если это не делать то length будет равен размеру наименьшего из пришедших пакетов
                 packetToReceive.setLength(BUF_LENGTH);
             }
         } catch (IOException e) {
@@ -100,15 +105,14 @@ public class Listener {
 
     private void handleHelloMessage(Message message, InetSocketAddress senderAddress) throws IOException {
         sender.sendConfirmation(message.getGUID(), senderAddress);
-        // если это новый сосед, а не ответ на наш хелло пакет, то отправляем ему своего заместителя
         InetSocketAddress senderAlternate = getSocketAddress(message.getContent());
+        System.out.println(message.getName() + " joined chat!");
 
         if (alternate == null){
             sender.setAlternate(senderAddress);
         }
 
         if(!neighbours.containsKey(senderAddress)){
-            System.out.println(message.getName() + " joined chat!");
             sender.sendHelloMessage(senderAddress);
         }
         neighbours.put(senderAddress, new NeighbourContext(senderAlternate));
@@ -133,4 +137,16 @@ public class Listener {
         String[] tmpBuf = addressAndPort.split(":");
         return new InetSocketAddress(tmpBuf[0], Integer.parseInt(tmpBuf[1]));
     }
+
+    private boolean checkIsDuplicate(MessageType messageType, String GUID){
+        if(messageType == MessageType.MESSAGE || messageType == MessageType.HELLO) {
+            if(receivedMessageGuids.contains(GUID)){
+                return true;
+            }
+            receivedMessageGuids.addGUID(GUID);
+        }
+
+        return false;
+    }
+
 }
