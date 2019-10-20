@@ -31,9 +31,6 @@ public class Sender {
 
     private AlternateListener alternateListener;
 
-    private Random random = new Random();
-
-
     public Sender(Map<InetSocketAddress, NeighbourContext> neighbours, DatagramSocket socket,
                   String name, Map<String, MessageContext> sentMessages, ExecutorService executor) {
         this.neighbours = neighbours;
@@ -68,30 +65,20 @@ public class Sender {
     public void sendMessage(InetSocketAddress receiverAddress, Message message) throws IOException {
         byte[] buf = toJson(message).getBytes();
         //TODO тут надо учитывать, чтобы размер json не был больше буф сайза
-        try{
         socket.send(new DatagramPacket(buf, buf.length, receiverAddress));
-        }catch (IllegalArgumentException ex){
-            System.out.println(ex.getLocalizedMessage() + " : " + receiverAddress);
-        }
     }
 
     public void sendConfirmation(String GUID, InetSocketAddress receiverAddress) throws IOException {
-        if(random.nextInt(100) < 40) {
-            System.out.println("Oopsy " + GUID);
-            return;
-        }
-
         Message message = new Message(name, "", MessageType.ACK);
         message.setGUID("A" + GUID);
         sendMessage(receiverAddress, message);
     }
 
     public void sendHelloMessage(InetSocketAddress receiverAddress) throws IOException {
-//        String alternateJson = toJson(alternate);
-        System.out.println(receiverAddress + "- alt" + alternate);
         String alternateStr = (receiverAddress.equals(alternate)) ? null : alternateToString();
         Message message = new Message(name, alternateStr, MessageType.HELLO);
         sendMessage(receiverAddress,message);
+        sentMessages.put(message.getGUID(), new MessageContext(message, receiverAddress));
     }
 
     public void notifyAlternate() throws IOException {
@@ -106,6 +93,14 @@ public class Sender {
 
     public InetSocketAddress getAlternate() {
         return alternate;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Map<String, MessageContext> getSentMessages() {
+        return sentMessages;
     }
 
     public void registerAlternateListener(AlternateListener listener){

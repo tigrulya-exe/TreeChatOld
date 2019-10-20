@@ -36,6 +36,8 @@ public class Listener {
 
     private DatagramSocket socket;
 
+    private Random random = new Random();
+
 
 //    private ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -64,6 +66,11 @@ public class Listener {
                 String jsonMsg = new String(packetToReceive.getData(), 0, packetToReceive.getLength());
                 message = fromJson(jsonMsg, Message.class);
                 type = message.getType();
+
+                if(random.nextInt(100) < 20) {
+                    System.out.println("Oopsy " + message.getGUID());
+                    continue;
+                }
 
                 if(type == MessageType.HELLO)
                     System.out.println(jsonMsg);
@@ -96,7 +103,6 @@ public class Listener {
         InetSocketAddress senderAlternate = getSocketAddress(message.getContent());
 
         if (alternate == null){
-//            alternate = senderAddress;
             sender.setAlternate(senderAddress);
         }
 

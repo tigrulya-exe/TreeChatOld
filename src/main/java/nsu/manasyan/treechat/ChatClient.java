@@ -15,6 +15,8 @@ import java.util.concurrent.Executors;
 public class ChatClient {
     private static final int CONFIRM_TIMEOUT_MS = 2000;
 
+    private static final int KEEP_ALIVE_TIMEOUT_MS = 10000;
+
     private Map<InetSocketAddress, NeighbourContext> neighbours = new HashMap<>();
 
     private ExecutorService executorService = Executors.newCachedThreadPool();
@@ -30,7 +32,6 @@ public class ChatClient {
     private DatagramSocket socket;
 
     private Timer timer = new Timer();
-
 
     public ChatClient(String name, int port) throws SocketException {
         this.socket = new DatagramSocket(port);
@@ -55,6 +56,6 @@ public class ChatClient {
 
     private void initTimer(){
         timer.schedule(new Resender(sentMessages, sender), 0, CONFIRM_TIMEOUT_MS);
-        timer.schedule(new KeepAliveSender(neighbours, sender), 0, CONFIRM_TIMEOUT_MS);
+        timer.schedule(new KeepAliveSender(neighbours, sender), 0, KEEP_ALIVE_TIMEOUT_MS);
     }
 }

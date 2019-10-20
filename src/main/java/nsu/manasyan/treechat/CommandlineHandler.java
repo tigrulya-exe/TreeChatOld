@@ -13,11 +13,12 @@ public class CommandlineHandler implements Runnable{
     }
 
     public void run(){
+        String name = sender.getName();
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             String messageStr;
             while (true) {
                 messageStr = reader.readLine();
-                System.out.println("You: " + messageStr);
+                System.out.println("<" + name + "> : " + messageStr);
                 sender.broadcastMessage(messageStr, MessageType.MESSAGE,true);
             }
         }catch (IOException e) {
