@@ -1,6 +1,8 @@
-package nsu.manasyan.treechat;
+package nsu.manasyan.treechat.timertasks;
 
+import nsu.manasyan.treechat.Sender;
 import nsu.manasyan.treechat.models.MessageContext;
+import nsu.manasyan.treechat.util.LoggingService;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -27,7 +29,7 @@ public class Resender extends TimerTask {
                     return;
                 }
                 InetSocketAddress address = new InetSocketAddress(m.getHostname(), m.getPort());
-                System.out.println(m.getMessage().getGUID() + " RESEND " + m.getPort());
+                LoggingService.info(m.getMessage().getGUID() + " RESEND " + m.getPort());
                 sender.sendMessage(address, m.getMessage());
             } catch (IOException e) {
                 e.printStackTrace();

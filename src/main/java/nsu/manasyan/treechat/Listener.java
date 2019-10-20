@@ -4,6 +4,7 @@ import nsu.manasyan.treechat.models.Message;
 import nsu.manasyan.treechat.models.MessageContext;
 import nsu.manasyan.treechat.models.MessageType;
 import nsu.manasyan.treechat.models.NeighbourContext;
+import nsu.manasyan.treechat.util.LoggingService;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -68,7 +69,7 @@ public class Listener {
                 type = message.getType();
 
                 if(random.nextInt(100) < 20) {
-                    System.out.println("Oopsy " + message.getGUID());
+                    LoggingService.info("Oopsy " + message.getGUID());
                     continue;
                 }
 
@@ -107,6 +108,7 @@ public class Listener {
         }
 
         if(!neighbours.containsKey(senderAddress)){
+            System.out.println(message.getName() + " joined chat!");
             sender.sendHelloMessage(senderAddress);
         }
         neighbours.put(senderAddress, new NeighbourContext(senderAlternate));

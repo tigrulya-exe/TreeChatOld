@@ -2,6 +2,9 @@ package nsu.manasyan.treechat;
 
 import nsu.manasyan.treechat.models.MessageContext;
 import nsu.manasyan.treechat.models.NeighbourContext;
+import nsu.manasyan.treechat.timertasks.KeepAliveSender;
+import nsu.manasyan.treechat.timertasks.NeighbourChecker;
+import nsu.manasyan.treechat.timertasks.Resender;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
@@ -17,7 +20,9 @@ public class ChatClient {
 
     private static final int KEEP_ALIVE_TIMEOUT_MS = 10000;
 
-    private Map<InetSocketAddress, NeighbourContext> neighbours = new HashMap<>();
+    private static final int KEEP_ALIVE_SEND_MS = 2000;
+
+    private Map<InetSocketAddress, NeighbourContext> neighbours = new ConcurrentHashMap<>();
 
     private ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -56,6 +61,7 @@ public class ChatClient {
 
     private void initTimer(){
         timer.schedule(new Resender(sentMessages, sender), 0, CONFIRM_TIMEOUT_MS);
-        timer.schedule(new KeepAliveSender(neighbours, sender), 0, KEEP_ALIVE_TIMEOUT_MS);
+        timer.schedule(new KeepAliveSender(sender), 0, KEEP_ALIVE_SEND_MS);
+        timer.schedule(new NeighbourChecker(neighbours, sender), 0, KEEP_ALIVE_TIMEOUT_MS);
     }
 }

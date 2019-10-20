@@ -5,6 +5,7 @@ import nsu.manasyan.treechat.models.MessageContext;
 import nsu.manasyan.treechat.models.MessageType;
 import nsu.manasyan.treechat.models.NeighbourContext;
 import nsu.manasyan.treechat.util.AlternateListener;
+import nsu.manasyan.treechat.util.LoggingService;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -63,9 +64,13 @@ public class Sender {
     }
 
     public void sendMessage(InetSocketAddress receiverAddress, Message message) throws IOException {
-        byte[] buf = toJson(message).getBytes();
-        //TODO тут надо учитывать, чтобы размер json не был больше буф сайза
-        socket.send(new DatagramPacket(buf, buf.length, receiverAddress));
+        try {
+            byte[] buf = toJson(message).getBytes();
+            //TODO тут надо учитывать, чтобы размер json не был больше буф сайза
+            socket.send(new DatagramPacket(buf, buf.length, receiverAddress));
+        } catch (IllegalArgumentException e){
+            System.out.println(receiverAddress);
+        }
     }
 
     public void sendConfirmation(String GUID, InetSocketAddress receiverAddress) throws IOException {
@@ -88,7 +93,7 @@ public class Sender {
     public void setAlternate(InetSocketAddress alternate) {
         this.alternate = alternate;
         alternateListener.onUpdate(alternate);
-        System.out.println("New alternate: " + alternate);
+        LoggingService.info("New alternate: " + alternate);
     }
 
     public InetSocketAddress getAlternate() {
