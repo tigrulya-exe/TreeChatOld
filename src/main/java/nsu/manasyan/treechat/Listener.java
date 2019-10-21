@@ -22,9 +22,11 @@ interface Handler{
 }
 
 public class Listener {
-    private static final  int BUF_LENGTH = 524288;
+    private static final int BUF_LENGTH = 524288;
 
     private static final int RECEIVED_MESSAGES_BUF_LENGTH = 15;
+
+    private static final int MAX_PERCENTS = 99;
 
     private InetSocketAddress alternate;
 
@@ -42,20 +44,21 @@ public class Listener {
 
     private Random random = new Random();
 
+    private int lossPercentage;
+
+    private boolean isInterrupted = false;
+
     private FiniteQueue<String> receivedMessageGuids = new FiniteQueue<>(RECEIVED_MESSAGES_BUF_LENGTH);
 
     public Listener(Map<InetSocketAddress, NeighbourContext> neighbours,
-                    Sender sender, Map<String, MessageContext> sentMessages, DatagramSocket socket) {
+                    Sender sender, Map<String, MessageContext> sentMessages, DatagramSocket socket, int lossPercentage) {
         this.neighbours = neighbours;
         this.sender = sender;
         sender.registerAlternateListener((a) -> alternate = a);
         this.sentMessages = sentMessages;
         this.socket = socket;
+        this.lossPercentage = lossPercentage;
         initHandlers();
-    }
-
-    public void setAlternate(InetSocketAddress alternate) {
-        this.alternate = alternate;
     }
 
     public void listen(){
@@ -63,15 +66,15 @@ public class Listener {
         MessageType type;
         DatagramPacket packetToReceive = new DatagramPacket(receiveBuf,BUF_LENGTH);
         try{
-            while (true) {
+            while (!isInterrupted) {
                 socket.receive(packetToReceive);
                 // TODO надо учитывать что данные в пакете могут быть больше размера json
                 String jsonMsg = new String(packetToReceive.getData(), 0, packetToReceive.getLength());
                 message = fromJson(jsonMsg, Message.class);
                 type = message.getType();
 
-                if(random.nextInt(100) < 20) {
-                    LoggingService.info("Oopsy " + message.getGUID());
+                if(random.nextInt(MAX_PERCENTS) < lossPercentage) {
+                    LoggingService.info("Ignored " + message.getGUID());
                     continue;
                 }
 
@@ -79,18 +82,16 @@ public class Listener {
                     continue;
                 }
 
-                if(type == MessageType.HELLO)
-                    System.out.println(jsonMsg);
-
                 handlers.get(type).handle(message, (InetSocketAddress) packetToReceive.getSocketAddress());
                 packetToReceive.setLength(BUF_LENGTH);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        finally {
-//            socket.close();
-//        }
+    }
+
+    public void interrupt(){
+        isInterrupted = true;
     }
 
     private void handleConfirmation(Message message, InetSocketAddress address){

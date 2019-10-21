@@ -1,14 +1,15 @@
 package nsu.manasyan.treechat;
 
+import nsu.manasyan.treechat.util.ArgResolver;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
-        ChatClient chatClient = new ChatClient("First", 8080, new InetSocketAddress("192.168.0.105", 8080));
-//        ChatClient chatClient = new ChatClient("Second", 8081, new InetSocketAddress("localhost", 8080));
-//        ChatClient chatClient = new ChatClient("THIRD", 8082, new InetSocketAddress("localhost", 8080));
-//        ChatClient chatClient = new ChatClient("FOURTH", 8083, new InetSocketAddress("localhost", 8081));
-        chatClient.start();
+    public static void main(String[] args) {
+        try {
+            ChatClient chatClient = new ChatClient(ArgResolver.resolve(args));
+            chatClient.start();
+        }catch (IOException ex){
+            System.out.println(ex.getLocalizedMessage());
+        }
     }
 }

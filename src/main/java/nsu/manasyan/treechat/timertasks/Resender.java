@@ -29,7 +29,8 @@ public class Resender extends TimerTask {
                     return;
                 }
                 InetSocketAddress address = new InetSocketAddress(m.getHostname(), m.getPort());
-                LoggingService.info(m.getMessage().getGUID() + " RESEND " + m.getPort());
+                LoggingService.info(m.getMessage().getContent() + " RESEND "
+                        + m.getHostname() + ":" + m.getPort());
                 sender.sendMessage(address, m.getMessage());
             } catch (IOException e) {
                 e.printStackTrace();
